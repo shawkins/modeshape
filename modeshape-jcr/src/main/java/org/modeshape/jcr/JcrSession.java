@@ -20,13 +20,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessControlException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Credentials;
 import javax.jcr.InvalidItemStateException;
@@ -61,6 +60,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionException;
 import javax.jcr.version.VersionIterator;
 import javax.transaction.SystemException;
+
 import org.modeshape.common.SystemFailureException;
 import org.modeshape.common.i18n.I18n;
 import org.modeshape.common.logging.Logger;
@@ -1144,31 +1144,13 @@ public class JcrSession implements org.modeshape.jcr.api.Session {
             externalTargetKey = destNode.key().getSourceKey();
         }
 
-        Connectors connectors = repository().runningState().connectors();
         if (sourceContainsExternalNodes && !targetIsExternal) {
-            String sourceName = connectors.getSourceNameAtKey(externalSourceKey);
-            throw new RepositoryException(JcrI18n.unableToMoveSourceContainExternalNodes.text(srcPath, sourceName));
+            throw new RepositoryException(JcrI18n.unableToMoveSourceContainExternalNodes.text(srcPath, externalSourceKey));
         } else if (!sourceContainsExternalNodes && targetIsExternal) {
-            String sourceName = connectors.getSourceNameAtKey(externalTargetKey);
-            throw new RepositoryException(JcrI18n.unableToMoveTargetContainExternalNodes.text(srcPath, sourceName));
+            throw new RepositoryException(JcrI18n.unableToMoveTargetContainExternalNodes.text(srcPath, externalSourceKey));
         } else if (targetIsExternal) {
             // both source and target are external nodes, but belonging to different sources
             assert externalTargetKey != null;
-            if (!externalTargetKey.equalsIgnoreCase(srcNode.key().getSourceKey())) {
-                String sourceNodeSourceName = connectors.getSourceNameAtKey(srcNode.key().getSourceKey());
-                String targetNodeSourceName = connectors.getSourceNameAtKey(externalTargetKey);
-                throw new RepositoryException(JcrI18n.unableToMoveSourceTargetMismatch.text(sourceNodeSourceName,
-                                                                                            targetNodeSourceName));
-            }
-
-            // both source and target belong to the same source, but one of them is a projection root
-            if (connectors.hasExternalProjection(srcPath.getLastSegment().getString(), srcNode.key().toString())) {
-                throw new RepositoryException(JcrI18n.unableToMoveProjection.text(srcPath));
-            }
-
-            if (connectors.hasExternalProjection(destPath.getLastSegment().getString(), destNode.key().toString())) {
-                throw new RepositoryException(JcrI18n.unableToMoveProjection.text(destPath));
-            }
         }
     }
 
@@ -1465,28 +1447,7 @@ public class JcrSession implements org.modeshape.jcr.api.Session {
 
     private boolean hasPermissionOnExternalPath( PathSupplier pathSupplier,
                                                  String... actions ) throws RepositoryException {
-        Connectors connectors = this.repository().runningState().connectors();
-        if (!connectors.hasConnectors() || !connectors.hasReadonlyConnectors()) {
-            // federation is not enabled or there are no readonly connectors
-            return true;
-        }
-        Path path = pathSupplier.getAbsolutePath();
-        if (path == null) return false;
-        if (connectors.isReadonlyPath(path, this)) {
-            // this is a readonly external path, so we need to see what the actual actions are
-            if (actions.length > ModeShapePermissions.READONLY_EXTERNAL_PATH_PERMISSIONS.size()) {
-                return false;
-            }
-            List<String> actionsList = new ArrayList<String>(Arrays.asList(actions));
-            for (Iterator<String> actionsIterator = actionsList.iterator(); actionsIterator.hasNext();) {
-                String action = actionsIterator.next();
-                if (!ModeShapePermissions.READONLY_EXTERNAL_PATH_PERMISSIONS.contains(action)) {
-                    return false;
-                }
-                actionsIterator.remove();
-            }
-            return actionsList.isEmpty();
-        }
+        // federation is not enabled or there are no readonly connectors
         return true;
     }
 

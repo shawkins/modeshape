@@ -213,8 +213,7 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
                                                                                               null, false, false);
             Map<NodeKey, NodeKey> nodeKeyCorrespondence = copy.mutable().deepCopy(copySession.cache(), sourceNode.node(),
                                                                                   sourceSession.cache(),
-                                                                                  repository().systemWorkspaceKey(),
-                                                                                  repository().runningState().connectors());
+                                                                                  repository().systemWorkspaceKey());
             /**
              * Do some extra processing for each copied node
              */
@@ -258,8 +257,7 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
             return;
         }
         String destExternalKey = parentKey.getSourceKey();
-        Connectors connectors = repository().runningState().connectors();
-        String destSourceName = connectors.getSourceNameAtKey(destExternalKey);
+        String destSourceName = null;
 
         Set<NodeKey> sourceKeys = session.cache().getNodeKeysAtAndBelow(sourceNode.key());
         boolean sourceContainsExternalNodes = false;
@@ -268,7 +266,7 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
             if (!rootSourceKey.equalsIgnoreCase(sourceNodeSourceKey)) {
                 sourceContainsExternalNodes = true;
                 if (!sourceNodeSourceKey.equalsIgnoreCase(destExternalKey)) {
-                    String sourceExternalSourceName = connectors.getSourceNameAtKey(sourceNodeSourceKey);
+                    String sourceExternalSourceName = null;
                     throw new RepositoryException(JcrI18n.unableToCopySourceTargetMismatch.text(sourceExternalSourceName,
                                                                                                 destSourceName));
                 }
@@ -497,13 +495,12 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
                                                 AbstractJcrNode parentNode ) throws RepositoryException {
 
         String rootSourceKey = sourceSession.getRootNode().key().getSourceKey();
-        Connectors connectors = repository().runningState().connectors();
 
         Set<NodeKey> sourceKeys = sourceSession.cache().getNodeKeysAtAndBelow(sourceNode.key());
         for (NodeKey sourceKey : sourceKeys) {
             String sourceNodeSourceKey = sourceKey.getSourceKey();
             if (!sourceNodeSourceKey.equalsIgnoreCase(rootSourceKey)) {
-                String sourceNameAtKey = connectors.getSourceNameAtKey(sourceNodeSourceKey);
+                String sourceNameAtKey = null;
                 if (sameWorkspace) {
                     throw new RepositoryException(JcrI18n.unableToCloneSameWsContainsExternalNode.text(sourceNameAtKey));
                 } else if (!sourceNode.isRoot() || !parentNode.isRoot()) {
@@ -827,8 +824,7 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
         /**
          * Perform the clone at the cache level - clone all properties & children
          */
-        mutableCloneNode.deepClone(cloneCache, sourceNode, sourceCache, repository().systemWorkspaceKey(),
-                                   repository().runningState().connectors());
+        mutableCloneNode.deepClone(cloneCache, sourceNode, sourceCache, repository().systemWorkspaceKey());
 
         /**
          * Make sure the version history is preserved

@@ -41,7 +41,6 @@ import org.modeshape.common.annotation.ThreadSafe;
 import org.modeshape.common.logging.Logger;
 import org.modeshape.common.text.Inflector;
 import org.modeshape.common.util.StringUtil;
-import org.modeshape.jcr.Connectors;
 import org.modeshape.jcr.JcrI18n;
 import org.modeshape.jcr.JcrLexicon;
 import org.modeshape.jcr.JcrNtLexicon;
@@ -1404,11 +1403,10 @@ public class SessionNode implements MutableCachedNode {
     public Map<NodeKey, NodeKey> deepCopy( SessionCache cache,
                                            CachedNode sourceNode,
                                            SessionCache sourceCache,
-                                           String systemWorkspaceKey,
-                                           Connectors connectors ) {
+                                           String systemWorkspaceKey) {
         final WritableSessionCache writableSessionCache = writableSession(cache);
         writableSessionCache.assertInSession(this);
-        DeepCopy copier = new DeepCopy(this, writableSessionCache, sourceNode, sourceCache, systemWorkspaceKey, connectors);
+        DeepCopy copier = new DeepCopy(this, writableSessionCache, sourceNode, sourceCache, systemWorkspaceKey);
         copier.execute();
         return copier.getSourceToTargetKeys();
     }
@@ -1417,11 +1415,10 @@ public class SessionNode implements MutableCachedNode {
     public void deepClone( SessionCache cache,
                            CachedNode sourceNode,
                            SessionCache sourceCache,
-                           String systemWorkspaceKey,
-                           Connectors connectors ) {
+                           String systemWorkspaceKey) {
         final WritableSessionCache writableSessionCache = writableSession(cache);
         writableSessionCache.assertInSession(this);
-        DeepClone cloner = new DeepClone(this, writableSessionCache, sourceNode, sourceCache, systemWorkspaceKey, connectors);
+        DeepClone cloner = new DeepClone(this, writableSessionCache, sourceNode, sourceCache, systemWorkspaceKey);
         cloner.execute();
     }
 
@@ -2673,15 +2670,13 @@ public class SessionNode implements MutableCachedNode {
         protected final Map<NodeKey, Set<Property>> sourceKeyToReferenceProperties = new HashMap<NodeKey, Set<Property>>();
         protected final DocumentStore documentStore;
         protected final String systemWorkspaceKey;
-        protected final Connectors connectors;
         protected final ValueFactories valueFactories;
 
         protected DeepCopy( SessionNode targetNode,
                             WritableSessionCache cache,
                             CachedNode sourceNode,
                             SessionCache sourceCache,
-                            String systemWorkspaceKey,
-                            Connectors connectors ) {
+                            String systemWorkspaceKey) {
             this.targetCache = cache;
             this.targetNode = targetNode;
             this.sourceCache = sourceCache;
@@ -2691,7 +2686,6 @@ public class SessionNode implements MutableCachedNode {
             this.targetWorkspaceKey = targetNode.getKey().getWorkspaceKey();
             this.documentStore = ((WorkspaceCache)sourceCache.getWorkspace()).documentStore();
             this.systemWorkspaceKey = systemWorkspaceKey;
-            this.connectors = connectors;
             this.valueFactories = this.targetCache.context().getValueFactories();
         }
 
@@ -2743,38 +2737,30 @@ public class SessionNode implements MutableCachedNode {
                     boolean isExternal = !childKey.getSourceKey().equalsIgnoreCase(sourceCache.getRootKey().getSourceKey());
                     MutableCachedNode childCopy = null;
                     String projectionAlias = sourceChildName.getString();
-                    if (isExternal && connectors.hasExternalProjection(projectionAlias, childKey.toString())) {
-                        // the child is a projection, so we need to create the projection in the parent
-                        targetNode.addFederatedSegment(childKey.toString(), projectionAlias);
-                        // since the child is a projection, use the external node key to retrieve the node/document from the
-                        // connectors
-                        childCopy = targetCache.mutable(childKey);
-                    } else {
-                        // The child is a normal child of this node ...
+                    // The child is a normal child of this node ...
 
-                        // check if there is a child with the same segment in the target which was not processed yet
-                        ChildReferences targetNodeChildReferences = targetNode.getChildReferences(targetCache);
-                        ChildReference targetChildSameSegment = targetNodeChildReferences.getChild(sourceChildReference.getSegment());
-                        if (targetChildSameSegment != null && !sourceToTargetKeys.containsValue(targetChildSameSegment.getKey())) {
-                            // we found a child of the target node which has the same segment and has not been processed yet
-                            // meaning it was present in the target before the deep copy/clone started (e.g. an autocreated node)
-                            childCopy = targetCache.mutable(targetChildSameSegment.getKey());
-                            if (!isExternal) {
-                                // if the child is not external, we should remove it because the new child needs to be identical
-                                // to the source child
-                                targetNode.removeChild(targetCache, targetChildSameSegment.getKey());
-                                targetCache.destroy(targetChildSameSegment.getKey());
-                                childCopy = null;
-                            }
+                    // check if there is a child with the same segment in the target which was not processed yet
+                    ChildReferences targetNodeChildReferences = targetNode.getChildReferences(targetCache);
+                    ChildReference targetChildSameSegment = targetNodeChildReferences.getChild(sourceChildReference.getSegment());
+                    if (targetChildSameSegment != null && !sourceToTargetKeys.containsValue(targetChildSameSegment.getKey())) {
+                        // we found a child of the target node which has the same segment and has not been processed yet
+                        // meaning it was present in the target before the deep copy/clone started (e.g. an autocreated node)
+                        childCopy = targetCache.mutable(targetChildSameSegment.getKey());
+                        if (!isExternal) {
+                            // if the child is not external, we should remove it because the new child needs to be identical
+                            // to the source child
+                            targetNode.removeChild(targetCache, targetChildSameSegment.getKey());
+                            targetCache.destroy(targetChildSameSegment.getKey());
+                            childCopy = null;
                         }
+                    }
 
-                        if (childCopy == null) {
-                            // we should create a new child in target with a preferred key (different for copy/clone)
-                            String childCopyPreferredKey = documentStore.newDocumentKey(targetKey.toString(), sourceChildName,
-                                                                                        sourceChild.getPrimaryType(sourceCache));
-                            NodeKey newKey = createTargetKeyFor(childKey, targetKey, childCopyPreferredKey);
-                            childCopy = targetNode.createChild(targetCache, newKey, sourceChildName, null);
-                        }
+                    if (childCopy == null) {
+                        // we should create a new child in target with a preferred key (different for copy/clone)
+                        String childCopyPreferredKey = documentStore.newDocumentKey(targetKey.toString(), sourceChildName,
+                                                                                    sourceChild.getPrimaryType(sourceCache));
+                        NodeKey newKey = createTargetKeyFor(childKey, targetKey, childCopyPreferredKey);
+                        childCopy = targetNode.createChild(targetCache, newKey, sourceChildName, null);
                     }
                     doPhase1(childCopy, sourceChild);
                 } else {
@@ -3057,9 +3043,8 @@ public class SessionNode implements MutableCachedNode {
                              WritableSessionCache cache,
                              CachedNode sourceNode,
                              SessionCache sourceCache,
-                             String systemWorkspaceKey,
-                             Connectors connectors ) {
-            super(targetNode, cache, sourceNode, sourceCache, systemWorkspaceKey, connectors);
+                             String systemWorkspaceKey) {
+            super(targetNode, cache, sourceNode, sourceCache, systemWorkspaceKey);
         }
 
         @Override

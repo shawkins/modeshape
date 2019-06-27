@@ -48,7 +48,6 @@ import org.modeshape.common.util.ObjectUtil;
 import org.modeshape.common.util.Reflection;
 import org.modeshape.common.util.ResourceLookup;
 import org.modeshape.common.util.StringUtil;
-import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.index.IndexColumnDefinition;
 import org.modeshape.jcr.api.index.IndexDefinition;
 import org.modeshape.jcr.api.index.IndexDefinition.IndexKind;
@@ -688,30 +687,10 @@ public class RepositoryConfiguration {
 
         INDEX_PROVIDER_ALIASES = Collections.unmodifiableMap(aliases);
 
-        String fileSystemConnector = FileSystemConnector.class.getName();
-        String gitConnector = "org.modeshape.connector.git.GitConnector";
-        String cmisConnector = "org.modeshape.connector.cmis.CmisConnector";
-        String jdbcMetadataConnector = "org.modeshape.connector.meta.jdbc.JdbcMetadataConnector";
-
         aliases = new HashMap<>();
-        aliases.put("files", fileSystemConnector);
-        aliases.put("filesystem", fileSystemConnector);
-        aliases.put("filesystemconnector", fileSystemConnector);
-        aliases.put("git", gitConnector);
-        aliases.put("gitconnector", gitConnector); 
-        aliases.put("jdbcmetadata", jdbcMetadataConnector);
-        aliases.put("jdbcmetadataconnector", jdbcMetadataConnector);
-        aliases.put("cmis", cmisConnector);
-        aliases.put("cmisconnector", cmisConnector);
-
         CONNECTOR_ALIASES = Collections.unmodifiableMap(aliases);
 
-        String tikaExtractor = "org.modeshape.extractor.tika.TikaTextExtractor";
-
         aliases = new HashMap<>();
-        aliases.put("tika", tikaExtractor);
-        aliases.put("tikaextractor", tikaExtractor);
-        aliases.put("tikatextextractor", tikaExtractor);
         EXTRACTOR_ALIASES = Collections.unmodifiableMap(aliases);
 
         SCHEMA_LIBRARY = Schematic.createSchemaLibrary("ModeShape Repository Configuration Schemas");

@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import org.modeshape.jcr.Connectors;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
 
@@ -366,8 +365,7 @@ public interface MutableCachedNode extends CachedNode {
     public Map<NodeKey, NodeKey> deepCopy( SessionCache cache,
                                            CachedNode sourceNode,
                                            SessionCache sourceCache,
-                                           String systemWorkspaceKey,
-                                           Connectors connectors );
+                                           String systemWorkspaceKey);
 
     /**
      * Clones into this node all the properties and children (deep clone) from the given source node. Each cloned node will have
@@ -382,8 +380,7 @@ public interface MutableCachedNode extends CachedNode {
     public void deepClone( SessionCache cache,
                            CachedNode sourceNode,
                            SessionCache sourceCache,
-                           String systemWorkspaceKey,
-                           Connectors connectors );
+                           String systemWorkspaceKey);
 
     /**
      * Returns a set with all the referencing nodes (nodes which are referring this node) which have changed.

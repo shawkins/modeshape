@@ -98,7 +98,6 @@ import org.modeshape.jcr.cache.SessionCache;
 import org.modeshape.jcr.cache.WorkspaceNotFoundException;
 import org.modeshape.jcr.cache.document.DocumentStore;
 import org.modeshape.jcr.cache.document.LocalDocumentStore;
-import org.modeshape.jcr.federation.FederatedDocumentStore;
 import org.modeshape.jcr.journal.ChangeJournal;
 import org.modeshape.jcr.journal.LocalJournal;
 import org.modeshape.jcr.locking.LockingService;
@@ -347,9 +346,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 // Handle a few special cases that the running state doesn't really handle itself ...
                 if (!configChanges.storageChanged && configChanges.predefinedWorkspacesChanged) refreshWorkspaces();
                 if (configChanges.nameChanged) repositoryNameChanged();
-                if (configChanges.connectorsChanged) {
-                    newState.connectors.restart(config.get().getFederation());
-                }
             }
             logger.debug("Applied changes to '{0}' repository configuration: {1} --> {2}", repositoryName, changes, config);
         } finally {
@@ -921,7 +917,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
         private final InitialContentImporter initialContentImporter;
         private final SystemContentInitializer systemContentInitializer;
         private final NodeTypesImporter nodeTypesImporter;
-        private final Connectors connectors;
         private final List<ScheduledFuture<?>> backgroundProcesses = new ArrayList<>();
         private final Problems problems;
         private final ChangeJournal journal;
@@ -991,7 +986,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                     this.schematicDb = other.schematicDb;
                     this.cache = other.cache;
                     this.context = other.context;
-                    this.connectors = other.connectors;
                     this.documentStore = other.documentStore;
                     this.txMgrLookup = other.txMgrLookup;
                     this.txnMgr = other.txnManager();
@@ -1032,7 +1026,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                     this.txMgrLookup = config.getTransactionManagerLookup();
                     this.txnMgr = this.txMgrLookup.getTransactionManager();
                     this.transactions = createTransactions(this.txnMgr, schematicDb);
-                    this.connectors = new Connectors(this, config.getFederation(), problems);                    
                    
                     RepositoryConfiguration.Clustering clustering = config.getClustering();
                     long lockTimeoutMillis = config.getLockTimeoutMillis();
@@ -1087,7 +1080,7 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                                                                                                      this.lockingService,
                                                                                                      journalId());
                     LocalDocumentStore localStore = new LocalDocumentStore(schematicDb, repositoryEnvironment);
-                    this.documentStore = connectors.hasConnectors() ? new FederatedDocumentStore(connectors, localStore) : localStore;
+                    this.documentStore = localStore;
 
                     // Set up the repository cache ...
                     this.cache = new RepositoryCache(context, documentStore, config, systemContentInitializer,
@@ -1251,9 +1244,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 // import initial content for each of the workspaces; this has to be done after the running state has started
                 this.initialContentImporter.initialize();
                 
-                // connectors must be initialized after initial content because that can have an influence on projections
-                this.connectors.initialize();
-
                 // only mark the query manager as initialed *after* all the other components have finished initializing
                 // otherwise we risk getting indexing/scanning events for components which have not finished initializing (e.g. connectors)
                 this.repositoryQueryManager.initialize();
@@ -1447,10 +1437,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
             return changeBus;
         }
 
-        final Connectors connectors() {
-            return connectors;
-        }
-
         protected final String repositoryKey() {
             return cache.getKey();
         }
@@ -1567,11 +1553,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 // if reindexing was asynchronous and is still going on, we need to terminate it before we stop any of caches
                 // or we do anything that affects the nodes
                 this.repositoryQueryManager.stopReindexing();
-            }
-
-            if (connectors != null) {
-                // shutdown the connectors
-                this.connectors.shutdown();
             }
 
             // Remove the scheduled operations ...

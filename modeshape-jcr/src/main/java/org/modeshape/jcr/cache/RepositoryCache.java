@@ -33,7 +33,6 @@ import org.modeshape.common.i18n.I18n;
 import org.modeshape.common.logging.Logger;
 import org.modeshape.common.statistic.Stopwatch;
 import org.modeshape.common.util.CheckArg;
-import org.modeshape.jcr.Connectors;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.JcrI18n;
 import org.modeshape.jcr.JcrLexicon;
@@ -60,8 +59,6 @@ import org.modeshape.jcr.cache.document.ReadOnlySessionCache;
 import org.modeshape.jcr.cache.document.TransactionalWorkspaceCaches;
 import org.modeshape.jcr.cache.document.WorkspaceCache;
 import org.modeshape.jcr.cache.document.WritableSessionCache;
-import org.modeshape.jcr.federation.FederatedDocumentStore;
-import org.modeshape.jcr.spi.federation.Connector;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.PropertyFactory;
@@ -880,52 +877,6 @@ public class RepositoryCache {
         return workspace(workspaceName);
     }
 
-    /**
-     * Creates a new workspace in the repository coupled with external document
-     * store.
-     *
-     * @param name the name of the repository
-     * @param connectors connectors to the external systems.
-     * @return workspace cache for the new workspace.
-     */
-    public WorkspaceCache createExternalWorkspace(String name, Connectors connectors) {
-        String[] tokens = name.split(":");
-        
-        String sourceName = tokens[0];
-        String workspaceName = tokens[1];
-        
-        this.workspaceNames.add(workspaceName);
-        refreshRepositoryMetadata(true);
-
-        ConcurrentMap<NodeKey, CachedNode> nodeCache = cacheForWorkspace().asMap();
-        ExecutionContext context = context();
-        
-        //the name of the external connector is used for source name and workspace name
-        
-        String sourceKey = NodeKey.keyForSourceName(sourceName);
-        String workspaceKey = NodeKey.keyForWorkspaceName(workspaceName);
-
-        //ask external system to determine root identifier.
-        Connector connector = connectors.getConnectorForSourceName(sourceName); 
-        if (connector == null) {
-            throw new IllegalArgumentException(JcrI18n.connectorNotFound.text(sourceName));
-        }
-        FederatedDocumentStore documentStore = new FederatedDocumentStore(connectors, this.documentStore().localStore());
-        String rootId = connector.getRootDocumentId();
-
-        // Compute the root key for this workspace ...
-        NodeKey rootKey = new NodeKey(sourceKey, workspaceKey, rootId);
-
-        // We know that this workspace is not the system workspace, so find it ...
-        final WorkspaceCache systemWorkspaceCache = workspaceCachesByName.get(systemWorkspaceName);
-        
-        WorkspaceCache workspaceCache = new WorkspaceCache(context, getKey(), 
-                workspaceName, systemWorkspaceCache, documentStore, translator, rootKey, nodeCache, changeBus, repositoryEnvironment());
-        workspaceCachesByName.put(workspaceName, workspaceCache);
-
-        return workspace(workspaceName);
-    }
-    
     /**
      * Create a session for the workspace with the given name, using the supplied ExecutionContext for the session.
      *

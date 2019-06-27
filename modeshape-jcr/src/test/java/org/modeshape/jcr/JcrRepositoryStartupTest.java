@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
 import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -43,14 +44,12 @@ import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.AccessControlPolicyIterator;
 import javax.jcr.security.Privilege;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.common.FixFor;
 import org.modeshape.common.util.FileUtil;
 import org.modeshape.common.util.IoUtil;
-import org.modeshape.connector.mock.MockConnector;
-import org.modeshape.jcr.api.Workspace;
-import org.modeshape.jcr.api.federation.FederationManager;
 import org.modeshape.jcr.api.index.IndexColumnDefinitionTemplate;
 import org.modeshape.jcr.api.index.IndexDefinition;
 import org.modeshape.jcr.api.index.IndexDefinitionTemplate;
@@ -156,81 +155,6 @@ public class JcrRepositoryStartupTest extends MultiPassAbstractTest {
                 // expected
             }
             ws1Session.getNode("/testNode");
-        }, repositoryConfigFile);
-    }
-
-    @Test
-    @FixFor( "MODE-1716" )
-    public void shouldPersistExternalProjectionToFederatedNodeMappings() throws Exception {
-        String repositoryConfigFile = "config/repo-config-mock-federation-persistent.json";
-        startRunStop(repository -> {
-            Session session = repository.login();
-            Node testRoot = session.getRootNode().addNode("testRoot");
-            session.save();
-
-            FederationManager federationManager = ((Workspace)session.getWorkspace()).getFederationManager();
-
-            federationManager.createProjection("/testRoot", "mock-source", MockConnector.DOC1_LOCATION, "federated1");
-            federationManager.createProjection("/testRoot", "mock-source", MockConnector.DOC2_LOCATION, null);
-            Node doc1Federated = session.getNode("/testRoot/federated1");
-            assertNotNull(doc1Federated);
-            assertEquals(testRoot.getIdentifier(), doc1Federated.getParent().getIdentifier());
-        }, repositoryConfigFile);
-
-        startRunStop(repository -> {
-            Session session = repository.login();
-            Node testRoot = session.getNode("/testRoot");
-            assertNotNull(testRoot);
-
-            Node doc1Federated = session.getNode("/testRoot/federated1");
-            assertNotNull(doc1Federated);
-            assertEquals(testRoot.getIdentifier(), doc1Federated.getParent().getIdentifier());
-
-            Node doc2Federated = session.getNode("/testRoot" + MockConnector.DOC2_LOCATION);
-            assertNotNull(doc2Federated);
-            assertEquals(testRoot.getIdentifier(), doc2Federated.getParent().getIdentifier());
-        }, repositoryConfigFile);
-    }
-
-    @Test
-    public void shouldKeepPreconfiguredProjectionsAcrossRestart() throws Exception {
-        String repositoryConfigFile = "config/repo-config-federation-persistent-projections.json";
-        RepositoryOperation checkPreconfiguredProjection = repository -> {
-            Session session = repository.login();
-            assertNotNull(session.getNode("/preconfiguredProjection"));
-        };
-        startRunStop(checkPreconfiguredProjection, repositoryConfigFile);
-        startRunStop(checkPreconfiguredProjection, repositoryConfigFile);
-    }
-
-    @Test
-    public void shouldCleanStoredProjectionsIfNodesAreDeleted() throws Exception {
-        String repositoryConfigFile = "config/repo-config-mock-federation-persistent.json";
-        startRunStop(repository -> {
-            Session session = repository.login();
-            session.getRootNode().addNode("testRoot");
-            session.save();
-
-            FederationManager federationManager = ((Workspace)session.getWorkspace()).getFederationManager();
-            federationManager.createProjection("/testRoot", "mock-source", MockConnector.DOC1_LOCATION, "federated1");
-            federationManager.createProjection("/testRoot", "mock-source", MockConnector.DOC2_LOCATION, "federated2");
-            Node projection = session.getNode("/testRoot/federated1");
-            assertNotNull(projection);
-
-            projection.remove();
-            session.save();
-        }, repositoryConfigFile);
-
-        startRunStop(repository -> {
-            Session session = repository.login();
-            // check the 2nd projection
-            assertNotNull(session.getNode("/testRoot/federated2"));
-            try {
-                session.getNode("/testRoot/federated1");
-                fail("Projection has not been cleaned up");
-            } catch (PathNotFoundException e) {
-                // expected
-            }
         }, repositoryConfigFile);
     }
 
@@ -572,35 +496,6 @@ public class JcrRepositoryStartupTest extends MultiPassAbstractTest {
     }
 
     @Test
-    @FixFor( "MODE-2176" )
-    public void shouldAllowExternalSourceChangesBetweenRestarts() throws Exception {
-        prepareExternalDirectory("target/federation_persistent_1");
-        startRunStop(repository-> {
-            JcrSession session = repository.login();
-            assertNotNull(session.getNode("/fs1"));
-            assertNotNull(session.getNode("/fs1/file.txt"));
-            assertNotNull(session.getNode("/fs2"));
-            assertNotNull(session.getNode("/fs2/file.txt"));
-        }, "config/repo-config-persistent-cache-fs-connector1.json");
-
-        FileUtil.delete("target/federation_persistent_1");
-        prepareExternalDirectory("target/federation_persistent_2");
-        // restart with a configuration file which a) has a new external source, b) has changed the directory path of "fs2" and
-        // c) has removed the fs1 projection
-        startRunStop(repository -> {
-            JcrSession session = repository.login();
-            try {
-                session.getNode("/fs1");
-                fail("The projection should not have been found");
-            } catch (PathNotFoundException e) {
-                // expected
-            }
-            assertNotNull(session.getNode("/fs2"));
-            assertNotNull(session.getNode("/fs2/file.txt"));
-        }, "config/repo-config-persistent-cache-fs-connector2.json");
-    }
-
-    @Test
     @FixFor( "MODE-2302" )
     public void shouldRun4_0_0_Beta3_UpgradeFunction() throws Exception {
         FileUtil.delete("target/legacy_fs_binarystore");
@@ -629,32 +524,6 @@ public class JcrRepositoryStartupTest extends MultiPassAbstractTest {
             assertFalse("No used binaries expected", binaryStore.getAllBinaryKeys().iterator().hasNext());
             assertTrue("The binary should be found", binaryStore.hasBinary(binaryKey));
         }, config);
-    }
-
-    @Test
-    @FixFor( "MODE-2341" )
-    public void shouldAllowReindexingWithLocalProviderBetweenRestartsWhenMissing() throws Exception {
-        // clean the indexes
-        TestingUtil.waitUntilFolderCleanedUp("target/startup_test_indexes");
-
-        // setup the external content
-        prepareExternalDirectory("target/federation_persistent_2");
-
-        RepositoryOperation reindexingExternalContentOperation = reindexingExternalContentOperation();
-
-        // run 1
-        startRunStop(reindexingExternalContentOperation, "config/repo-config-persistent-cache-fs-connector2.json");
-        long indexFolderSize1 = FileUtil.size("target/startup_test_indexes");
-
-        // clean the indexes
-        TestingUtil.waitUntilFolderCleanedUp("target/startup_test_indexes");
-
-        // run 2
-        startRunStop(reindexingExternalContentOperation, "config/repo-config-persistent-cache-fs-connector2.json");
-        long indexFolderSize2 = FileUtil.size("target/startup_test_indexes");
-
-        assertEquals("The sizes of the index folder are different between 2 identical reindex runs", indexFolderSize1,
-                     indexFolderSize2);
     }
 
     private RepositoryOperation reindexingExternalContentOperation() {
