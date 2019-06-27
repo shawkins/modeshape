@@ -43,11 +43,6 @@
             <groupId>org.modeshape</groupId>
             <artifactId>modeshape-persistence-file</artifactId>
         </dependency>
-        <!--Event bus clustering. Note the scope in the parent (provided) - this should be optional from a MS perspective -->
-        <dependency>
-            <groupId>org.jgroups</groupId>
-            <artifactId>jgroups</artifactId>
-        </dependency>
         <!-- Heap and file-based maps -->
         <dependency>
             <groupId>org.mapdb</groupId>
@@ -58,94 +53,6 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-        </dependency>
-        
-        <!-- MIME-type detection. This can be excluded in applications and components that depend on ModeShape
-             if MIME type detection is to be disabled in ModeShape. -->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers</artifactId>
-            <scope>provided</scope>
-            <exclusions>
-                <!--
-                Exclude a few more things that we don't need for MIME type detection.
-                We do this here instead of in the parent POM because the Tika-based
-                text extractor will want these.
-                -->
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm-debug-all</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.xerial</groupId>
-                    <artifactId>sqlite-jdbc</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.james</groupId>
-                    <artifactId>apache-mime4j-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.james</groupId>
-                    <artifactId>apache-mime4j-dom</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.ccil.cowan.tagsoup</groupId>
-                    <artifactId>tagsoup</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.pdfbox</groupId>
-                    <artifactId>pdfbox</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.googlecode.juniversalchardet</groupId>
-                    <artifactId>juniversalchardet</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.geronimo.specs</groupId>
-                    <artifactId>geronimo-stax-api_1.0_spec</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.googlecode.mp4parser</groupId>
-                    <artifactId>isoparser</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.junrar</groupId>
-                    <artifactId>junrar</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>edu.ucar</groupId>
-                    <artifactId>netcdf4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>edu.ucar</groupId>
-                    <artifactId>grib</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>edu.ucar</groupId>
-                    <artifactId>cdm</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>edu.ucar</groupId>
-                    <artifactId>httpservices</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-csv</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.bouncycastle</groupId>
-                    <artifactId>bcmail-jdk15on</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.bouncycastle</groupId>
-                    <artifactId>bcprov-jdk15on</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!--  Used in tests -->
@@ -160,14 +67,6 @@
             <artifactId>modeshape-schematic</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>de.flapdoodle.embed</groupId>
-            <artifactId>de.flapdoodle.embed.mongo</artifactId>
         </dependency>
         
         <!--
@@ -207,22 +106,6 @@
             <artifactId>narayana-jta</artifactId>
         </dependency>
         <!--
-        Used for Base64 testing. This may overlap or vary with the JBoss AS7 integration, so we fully-specify the version
-        we want to use here. It's only to validate our Base64 functionality, so we can use an older version.
-        -->
-        <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-common-core</artifactId>
-            <version>2.2.17.GA</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jboss.logging</groupId>
-                    <artifactId>jboss-logging-spi</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!--
         Logging (require SLF4J API for compiling, but use Log4J and its SLF4J binding for testing)
         -->
         <dependency>
@@ -252,42 +135,10 @@
             <artifactId>picketbox-bare</artifactId>
         </dependency>
 
-        <!--
-            Atomikos Transaction Manager (for testing only)
-        -->
-        <dependency>
-            <groupId>com.atomikos</groupId>
-            <artifactId>transactions</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.atomikos</groupId>
-            <artifactId>transactions-jta</artifactId>
-        </dependency>
-        
-        <!-- Cassandra binary storage -->
-        <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>cassandra-all</artifactId>
-        </dependency>
-
         <!-- Database binary storage -->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-        </dependency>
-
-        <!-- S3 binary storage -->
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
         </dependency>
     </dependencies>
     <build>

@@ -35,7 +35,6 @@ import org.modeshape.jcr.query.JcrQuery;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
-import org.modeshape.jcr.value.binary.S3BinaryStore;
 
 /**
  * @author Randall Hauch (rhauch@redhat.com)
@@ -322,15 +321,6 @@ public class Upgrades {
         @Override
         public void apply( Context resources ) {
             LOGGER.info(JcrI18n.upgrade5_5_0_Running);
-            RunningState runningState = resources.getRepository();
-            BinaryStore binaryStore = runningState.binaryStore();
-            try {
-                if (binaryStore instanceof S3BinaryStore) {
-                    ((S3BinaryStore)binaryStore).migrateUnusedMetadataToTags();
-                }
-            } catch (BinaryStoreException e) {
-                LOGGER.error(e, JcrI18n.upgrade5_5_0_Failed, e.getMessage());
-            }
         }
     }
 }

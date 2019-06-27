@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -35,13 +36,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import org.apache.tika.mime.MediaType;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.modeshape.common.FixFor;
@@ -51,9 +53,6 @@ import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
-import com.amazonaws.AmazonClientException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * Test suite that should include test cases which verify that a repository configured with various binary stores, correctly
@@ -274,26 +273,6 @@ public class BinaryStorageIntegrationTest extends SingleUseAbstractTest {
         assertEquals(0, binariesCount());
     }
 
-
-    @Test
-    @FixFor( "MODE-2489" )
-    public void shouldSupportContentBasedTypeDetection() throws Exception {
-        startRepositoryWithConfigurationFrom("config/repo-config-binaries-fs.json");
-
-        // upload 2 binaries but don't save
-        tools.uploadFile(session, "/file1", resourceStream("io/file1.txt"));
-        tools.uploadFile(session, "/file2", resourceStream("io/binary.pdf"));
-        session.save();
-
-        Node content1 = session.getNode("/file1").getNode("jcr:content");
-        // even though the name of the file has no extension, full content based extraction should've been performed
-        assertEquals(MediaType.TEXT_PLAIN.toString(), content1.getProperty("jcr:mimeType").getString());
-
-        Node content2 = session.getNode("/file2").getNode("jcr:content");
-        // even though the name of the file has no extension, full content based extraction should've been performed
-        assertEquals("application/pdf", content2.getProperty("jcr:mimeType").getString());
-    }
-    
     @Test
     @FixFor( "MODE-2489" )
     public void shouldSupportNoMimeTypeDetection() throws Exception {
@@ -312,50 +291,6 @@ public class BinaryStorageIntegrationTest extends SingleUseAbstractTest {
         }
     }  
     
-    @Test
-    @FixFor( "MODE-2489" )
-    public void shouldSupportNameBasedTypeDetection() throws Exception {
-        startRepositoryWithConfigurationFrom("config/repo-config-name-mimetype-detection.json");
-
-        tools.uploadFile(session, "/file1", resourceStream("io/file1.txt"));
-        tools.uploadFile(session, "/file2.txt", resourceStream("io/file2.txt"));
-        session.save();
-        
-        Node content1 = session.getNode("/file1").getNode("jcr:content");
-        // because the name of the file does not have an extension, we're expecting a generic mime type here
-        assertEquals("application/octet-stream", content1.getProperty("jcr:mimeType").getString());
-
-        Node content2 = session.getNode("/file2.txt").getNode("jcr:content");
-        // because the name of the file doe have an extension, we're expecting a specific mime type here
-        assertEquals("text/plain", content2.getProperty("jcr:mimeType").getString());
-    }
-    
-    @Test(expected = NoHostAvailableException.class)
-    public void shouldStartWithCassandraBinaryStore() throws Exception {
-        // we expect cassandra to fail because we're not starting a cassandra server, but we want to check that we get that far ;)
-        startRepositoryWithConfigurationFrom("config/cassandra-binary-storage.json");        
-    }
-   
-    @Test
-    public void shouldStartWithMongoBinaryStore() throws Exception {
-        // even though we don't start mongo in this test, the binary store is initialized ;)
-        startRepositoryWithConfigurationFrom("config/mongo-binary-storage.json");        
-    }
-
-    @Test
-    public void shouldStartWithS3BinaryStore() throws Exception {
-        try {
-            // even though we don't connect to s3 in this test, the binary store is initialized ;)
-            startRepositoryWithConfigurationFrom("config/s3-binary-storage.json");
-        } catch (BinaryStoreException e) {
-            if (e.getCause() instanceof AmazonClientException && e.getCause().getCause() instanceof IOException) {
-                System.err.println("Ignoring Amazon S3 integration test because there's a network issue...");                
-            } else {
-                throw e;
-            }
-        }
-    }
-
     private String randomString(long size) {
         StringBuilder builder = new StringBuilder("");
         while (builder.length() < size) {

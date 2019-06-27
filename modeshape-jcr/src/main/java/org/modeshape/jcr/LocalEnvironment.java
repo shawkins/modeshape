@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.jgroups.Channel;
 import org.modeshape.common.util.DelegatingClassLoader;
 import org.modeshape.common.util.StringURLClassLoader;
 import org.modeshape.common.util.StringUtil;
@@ -37,11 +36,6 @@ import org.modeshape.common.util.StringUtil;
 public class LocalEnvironment implements Environment {
 
     public LocalEnvironment() {
-    }
-
-    @Override
-    public Channel getChannel(String name) throws Exception {
-        return null;
     }
 
     @Override

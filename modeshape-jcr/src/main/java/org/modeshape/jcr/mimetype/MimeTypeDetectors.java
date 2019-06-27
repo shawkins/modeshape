@@ -19,8 +19,6 @@ package org.modeshape.jcr.mimetype;
 import org.modeshape.common.logging.Logger;
 import org.modeshape.jcr.Environment;
 import org.modeshape.jcr.RepositoryConfiguration;
-import org.modeshape.jcr.mimetype.tika.TikaContentDetector;
-import org.modeshape.jcr.mimetype.tika.TikaNameOnlyDetector;
 
 /**
  * Class which decides which {@link MimeTypeDetector} implementation to use at runtime
@@ -65,10 +63,10 @@ public final class MimeTypeDetectors {
     public static MimeTypeDetector createDetectorFor(String mimeTypeDetectionConfig, Environment environment) {
         switch (mimeTypeDetectionConfig.toLowerCase()) {
             case RepositoryConfiguration.FieldValue.MIMETYPE_DETECTION_CONTENT: {
-                return TIKA_AVAILABLE ? new TikaContentDetector(environment) : new DefaultMimeTypeDetector();
+                return new DefaultMimeTypeDetector();
             }
             case RepositoryConfiguration.FieldValue.MIMETYPE_DETECTION_NAME: {
-                return TIKA_AVAILABLE ? new TikaNameOnlyDetector(environment) : new DefaultMimeTypeDetector();
+                return new DefaultMimeTypeDetector();
             }
             case RepositoryConfiguration.FieldValue.MIMETYPE_DETECTION_NONE: {
                 return NullMimeTypeDetector.INSTANCE;

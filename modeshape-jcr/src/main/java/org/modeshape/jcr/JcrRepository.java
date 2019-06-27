@@ -48,6 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Credentials;
 import javax.jcr.LoginException;
@@ -63,7 +64,7 @@ import javax.security.auth.login.LoginContext;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import org.jgroups.Channel;
+
 import org.modeshape.common.annotation.Immutable;
 import org.modeshape.common.collection.Problem;
 import org.modeshape.common.collection.Problems;
@@ -89,7 +90,6 @@ import org.modeshape.jcr.api.monitor.ValueMetric;
 import org.modeshape.jcr.api.query.Query;
 import org.modeshape.jcr.api.txn.TransactionManagerLookup;
 import org.modeshape.jcr.bus.ChangeBus;
-import org.modeshape.jcr.bus.ClusteredChangeBus;
 import org.modeshape.jcr.bus.RepositoryChangeBus;
 import org.modeshape.jcr.cache.NodeCache;
 import org.modeshape.jcr.cache.NodeKey;
@@ -98,13 +98,9 @@ import org.modeshape.jcr.cache.SessionCache;
 import org.modeshape.jcr.cache.WorkspaceNotFoundException;
 import org.modeshape.jcr.cache.document.DocumentStore;
 import org.modeshape.jcr.cache.document.LocalDocumentStore;
-import org.modeshape.jcr.clustering.ClusteringService;
 import org.modeshape.jcr.federation.FederatedDocumentStore;
 import org.modeshape.jcr.journal.ChangeJournal;
-import org.modeshape.jcr.journal.ClusteredJournal;
 import org.modeshape.jcr.journal.LocalJournal;
-import org.modeshape.jcr.locking.DbLockingService;
-import org.modeshape.jcr.locking.JGroupsLockingService;
 import org.modeshape.jcr.locking.LockingService;
 import org.modeshape.jcr.locking.StandaloneLockingService;
 import org.modeshape.jcr.mimetype.MimeTypeDetector;
@@ -929,7 +925,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
         private final List<ScheduledFuture<?>> backgroundProcesses = new ArrayList<>();
         private final Problems problems;
         private final ChangeJournal journal;
-        private final ClusteringService clusteringService;
         private final LockingService lockingService;
 
         private Transaction existingUserTransaction;
@@ -1029,7 +1024,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                     this.changeBus.register(this.lockManager);
                     this.persistentRegistry = other.persistentRegistry;
                     this.changeDispatchingQueue = other.changeDispatchingQueue;
-                    this.clusteringService = other.clusteringService;
                     this.journal = other.journal;
                     this.lockingService = other.lockingService;
                 } else {
@@ -1042,21 +1036,7 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                    
                     RepositoryConfiguration.Clustering clustering = config.getClustering();
                     long lockTimeoutMillis = config.getLockTimeoutMillis();
-                    if (clustering.isEnabled()) {
-                        final String clusterName = clustering.getClusterName();
-                        Channel channel = environment().getChannel(clusterName);
-                        if (channel != null) {
-                            this.clusteringService = ClusteringService.startStandalone(clusterName, channel);
-                        } else {
-                            this.clusteringService = ClusteringService.startStandalone(clusterName, clustering.getConfiguration());        
-                        }
-                        this.lockingService = clustering.useDbLocking() ?
-                                              new DbLockingService(lockTimeoutMillis, this.schematicDb) :
-                                              new JGroupsLockingService(this.clusteringService.getChannel(), lockTimeoutMillis);
-                    } else {
-                        this.clusteringService = null;
-                        this.lockingService =  new StandaloneLockingService(lockTimeoutMillis);
-                    }
+                    this.lockingService =  new StandaloneLockingService(lockTimeoutMillis);
                   
                     suspendExistingUserTransaction();
                     
@@ -1080,7 +1060,7 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                     this.changeDispatchingQueue = this.context().getCachedTreadPool("modeshape-event-dispatcher", 
                                                                                     Integer.MAX_VALUE);
                     ChangeBus localBus = new RepositoryChangeBus(name(), changeDispatchingQueue, statistics(), config.getEventBusSize());
-                    this.changeBus = clusteringService != null ? new ClusteredChangeBus(localBus, clusteringService) : localBus;
+                    this.changeBus = localBus;
                     this.changeBus.start();
 
                     // Set up the event journal
@@ -1089,7 +1069,7 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                         boolean asyncWritesEnabled = journaling.asyncWritesEnabled();
                         LocalJournal localJournal = new LocalJournal(journaling.location(), asyncWritesEnabled,
                                                                      journaling.maxDaysToKeepRecords());
-                        this.journal = clusteringService != null ? new ClusteredJournal(localJournal, clusteringService) : localJournal;
+                        this.journal = localJournal;
                         this.journal.start();
                         if (asyncWritesEnabled) {
                             // Register the journal as a normal asynchronous listener ...
@@ -1628,12 +1608,7 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 this.cache.startShutdown();
             }
 
-            // shutdown the clustering service
-            if (this.clusteringService != null) {
-                this.clusteringService.shutdown();
-            }
-            
-            if (lockingService != clusteringService) {
+            if (lockingService != null) {
                 lockingService.shutdown();
             }
 

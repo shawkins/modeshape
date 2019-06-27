@@ -614,13 +614,6 @@ public class ImportExportTest extends SingleUseAbstractTest {
         // System.out.println("   length:  " + apacheBytes.length);
         // }
 
-        // Try jboss ...
-        byte[] jbossBytes = org.jboss.util.Base64.decode(base64Str);
-        if (print) {
-            System.out.println("JBoss:      " + toString(jbossBytes));
-            System.out.println("   length:  " + jbossBytes.length);
-        }
-
         // Try jackrabbit ...
         ByteArrayOutputStream jrOutput = new ByteArrayOutputStream();
         org.apache.jackrabbit.test.api.Base64.decode(base64Str, jrOutput);
@@ -636,10 +629,6 @@ public class ImportExportTest extends SingleUseAbstractTest {
             System.out.println("ModeShape:  " + toString(msBytes));
             System.out.println("   length:  " + msBytes.length);
         }
-
-        // assertThat(apacheBytes, is(jbossBytes)); // apache pads 3 0s at the end
-        assertThat(jrBytes, is(jbossBytes));
-        assertThat(msBytes, is(jbossBytes));
     }
 
     String toString( byte[] bytes ) {

@@ -62,12 +62,9 @@ import org.modeshape.jcr.txn.DefaultTransactionManagerLookup;
 import org.modeshape.jcr.value.PropertyType;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
-import org.modeshape.jcr.value.binary.CassandraBinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.DatabaseBinaryStore;
 import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
-import org.modeshape.jcr.value.binary.MongodbBinaryStore;
-import org.modeshape.jcr.value.binary.S3BinaryStore;
 import org.modeshape.jcr.value.binary.TransientBinaryStore;
 import org.modeshape.schematic.SchemaLibrary;
 import org.modeshape.schematic.SchemaLibrary.Problem;
@@ -1196,23 +1193,11 @@ public class RepositoryConfiguration {
                 store = createInstance();
                 setTypeFields(store, binaryStorage);
             } else if (type.equalsIgnoreCase(FieldValue.BINARY_STORAGE_TYPE_CASSANDRA)) {
-                String address = binaryStorage.getString(FieldName.ADDRESS);
-                store = new CassandraBinaryStore(address);
+                throw new BinaryStoreException("not supported");
             } else if (type.equalsIgnoreCase(FieldValue.BINARY_STORAGE_TYPE_MONGO)) {
-                String host = binaryStorage.getString(FieldName.HOST);
-                Integer port = binaryStorage.getInteger(FieldName.PORT);
-                String database = binaryStorage.getString(FieldName.DATABASE);
-                String username = binaryStorage.getString(FieldName.USER_NAME);
-                String password = binaryStorage.getString(FieldName.USER_PASSWORD);
-                List<String> hostAddresses = (List<String>) binaryStorage.getArray(FieldName.HOST_ADDRESSES);
-                store = new MongodbBinaryStore(host, port, database, username, password, hostAddresses);                
+                throw new BinaryStoreException("not supported");                
             } else if (type.equalsIgnoreCase(FieldValue.BINARY_STORAGE_TYPE_S3)) {
-                String username = binaryStorage.getString(FieldName.USER_NAME);
-                String password = binaryStorage.getString(FieldName.USER_PASSWORD);
-                String bucketName = binaryStorage.getString(FieldName.BUCKET_NAME);
-                String endPoint = binaryStorage.getString(FieldName.ENDPOINT_URL);
-                Boolean deleteUnusedNatively = binaryStorage.getBoolean(FieldName.DELETE_UNUSED_NATIVELY);
-                store = new S3BinaryStore(username, password, bucketName, endPoint, deleteUnusedNatively);
+                throw new BinaryStoreException("not supported");
             }
 
             if (store == null) store = TransientBinaryStore.get();

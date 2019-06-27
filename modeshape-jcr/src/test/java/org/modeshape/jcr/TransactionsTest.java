@@ -331,23 +331,6 @@ public class TransactionsTest extends SingleUseAbstractTest {
         }
     }
 
-    @FixFor( "MODE-1822" )
-    @Test
-    public void shouldBeAbleToVersionWithinUserTransactionAndAtomikosTransactionManager() throws Exception {
-        startRepositoryWithConfigurationFrom("config/repo-config-inmemory-atomikos.json");
-
-        startTransaction();
-        VersionManager vm = session.getWorkspace().getVersionManager();
-
-        Node node = session.getRootNode().addNode("Test3");
-        node.addMixin("mix:versionable");
-        node.setProperty("name", "lalalal");
-        node.setProperty("code", "lalalal");
-        session.save();
-        vm.checkin(node.getPath());
-        commitTransaction();
-    }
-
     @Test
     @FixFor( "MODE-2050" )
     public void shouldBeAbleToUseNoClientTransactionsInMultithreadedEnvironment() throws Exception {

@@ -1,9 +1,0 @@
-{
-    "jcr:primaryType":"nt:file",
-    "children":{
-        "jcr:content":{
-            "jcr:primaryType":"nt:resource",
-            "jcr:data" : "a string"
-        }
-    }
-}

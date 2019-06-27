@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import javax.jcr.RepositoryException;
-import org.apache.tika.mime.MediaType;
 import org.junit.Test;
 
 /**
@@ -35,11 +34,6 @@ public class DefaultMimeTypeDetectorTest {
     @Test
     public void shouldProvideMimeTypeForAu() throws Exception {
         testMimeType("test.au", "audio/basic");
-    }
-    
-    @Test
-    public void shouldProvideMimeTypeForBin() throws Exception {
-        testMimeType("test.bin", MediaType.OCTET_STREAM.toString());
     }
     
     @Test
@@ -80,16 +74,6 @@ public class DefaultMimeTypeDetectorTest {
     @Test
     public void shouldProvideMimeTypeForOpenOfficePresentation() throws Exception {
         testMimeType("component-architecture.odp", "application/vnd.oasis.opendocument.presentation");
-    }
-    
-    @Test
-    public void shouldProvideMimeTypeForXml() throws Exception {
-        testMimeType("master.xml", MediaType.APPLICATION_XML.toString());
-    }
-    
-    @Test
-    public void shouldProvideMimeTypeForXsd() throws Exception {
-        testMimeType("xsd_file.xsd", MediaType.APPLICATION_XML.toString());
     }
     
     @Test

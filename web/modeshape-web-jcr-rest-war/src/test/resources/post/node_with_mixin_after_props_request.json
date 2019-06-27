@@ -1,5 +1,0 @@
-{
-    "jcr:title" : "This is a title",
-    "jcr:primaryType" : "nt:folder",
-    "jcr:mixinTypes":"mix:title"
-}

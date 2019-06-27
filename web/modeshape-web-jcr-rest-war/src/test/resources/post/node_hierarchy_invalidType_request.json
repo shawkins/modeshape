@@ -1,9 +1,0 @@
-{
-    "jcr:primaryType":"nt:unstructured",
-    "testProperty":"testValue",
-    "children":{
-        "childNode":{
-            "jcr:primaryType":"invalidType"
-        }
-    }
-}
