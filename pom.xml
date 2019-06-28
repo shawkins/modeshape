@@ -34,7 +34,6 @@
         <!-- Order is important -->
 
         <!-- First these -->
-        <module>checkstyle</module>
         <module>modeshape-parent</module>
         <!-- Order is important -->
         <module>modeshape-jcr-api</module>

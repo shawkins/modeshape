@@ -18,6 +18,7 @@ package org.modeshape.schematic.internal.document;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,13 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import org.bson.BSONObject;
-import org.bson.BasicBSONCallback;
-import org.bson.BasicBSONDecoder;
-import org.bson.BasicBSONEncoder;
-import org.bson.BasicBSONObject;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.BasicBSONList;
+
 import org.codehaus.jackson.JsonToken;
 import org.junit.After;
 import org.junit.Assert;
@@ -406,49 +401,9 @@ public class BsonReadingAndWritingTest {
     protected Document writeThenRead( Document object,
                                       boolean compareToOtherImpls ) {
         try {
-            long start = System.nanoTime();
             byte[] bytes = writer.write(object);
-            long writeTime = System.nanoTime() - start;
 
-            start = System.nanoTime();
             Document result = reader.read(new ByteArrayInputStream(bytes));
-            long readTime = System.nanoTime() - start;
-
-            if (compareToOtherImpls) {
-                // Convert to MongoDB, write to bytes, and compare ...
-                BSONObject mongoData = createMongoData(object);
-                start = System.nanoTime();
-                byte[] mongoBytes = new BasicBSONEncoder().encode(mongoData);
-                long mongoWriteTime = System.nanoTime() - start;
-                assertSame(bytes, mongoBytes, "BSON   ", "Mongo  ");
-
-                // FYI: The Jackson BSON library writes several of the types incorrectly,
-                // whereas the MongoDB library seems to write things per the spec.
-
-                // // Convert to Jackson BSON, write to bytes, and compare ...
-                // ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
-                // ObjectMapper om = new ObjectMapper(new BsonFactory());
-                // Map<String, Object> jacksonData = createJacksonData(object);
-                // om.writeValue(stream2, jacksonData);
-                // byte[] jacksonBytes = stream2.toByteArray();
-                // assertSame(bytes, jacksonBytes, "BSON   ", "Jackson");
-
-                start = System.nanoTime();
-                new BasicBSONDecoder().decode(bytes, new BasicBSONCallback());
-                long mongoReadTime = System.nanoTime() - start;
-
-                Document fromMongo = reader.read(new ByteArrayInputStream(mongoBytes));
-                if (!fromMongo.equals(result)) {
-                    System.out.println("from Schematic: " + result);
-                    System.out.println("from Mongo:     " + fromMongo);
-                    fail("Document read from bytes written by Mongo did not match expected document: " + result);
-                }
-
-                if (print) {
-                    System.out.println("Reading with Schematic:  " + percent(readTime, mongoReadTime) + " than Mongo");
-                    System.out.println("Writing with Schematic:  " + percent(writeTime, mongoWriteTime) + " than Mongo");
-                }
-            }
 
             return result;
         } catch (IOException e) {
@@ -467,51 +422,6 @@ public class BsonReadingAndWritingTest {
             return "" + -percent + "% slower";
         }
         return "" + percent + "% faster";
-    }
-
-    protected BSONObject createMongoData( Document document ) {
-        BSONObject obj = new BasicBSONObject();
-        for (Document.Field field : document.fields()) {
-            Object value = field.getValue();
-            obj.put(field.getName(), createMongoData(value));
-        }
-        return obj;
-    }
-
-    protected Object createMongoData( Object value ) {
-        if (value instanceof MinKey) {
-            value = "MinKey";
-        } else if (value instanceof MaxKey) {
-            value = "MaxKey";
-        } else if (value instanceof Symbol) {
-            Symbol symbol = (Symbol)value;
-            value = new org.bson.types.Symbol(symbol.getSymbol());
-        } else if (value instanceof ObjectId) {
-            ObjectId id = (ObjectId)value;
-            value = new org.bson.types.ObjectId(id.getBytes());
-        } else if (value instanceof Timestamp) {
-            Timestamp ts = (Timestamp)value;
-            value = new BSONTimestamp(ts.getTime(), ts.getInc());
-        } else if (value instanceof CodeWithScope) {
-            CodeWithScope code = (CodeWithScope)value;
-            value = new org.bson.types.CodeWScope(code.getCode(), createMongoData(code.getScope()));
-        } else if (value instanceof Code) {
-            Code code = (Code)value;
-            value = new org.bson.types.Code(code.getCode());
-        } else if (value instanceof Binary) {
-            Binary binary = (Binary)value;
-            value = new org.bson.types.Binary(binary.getBytes());
-        } else if (value instanceof List) {
-            List<?> values = (List<?>)value;
-            BasicBSONList newValues = new BasicBSONList();
-            for (Object v : values) {
-                newValues.add(createMongoData(v));
-            }
-            value = newValues;
-        } else if (value instanceof Document) {
-            value = createMongoData((Document)value);
-        }
-        return value;
     }
 
     protected Map<String, Object> createJacksonData( Document document ) {

@@ -122,11 +122,6 @@ public class JcrQuery extends JcrAbstractQuery {
 
         checkForProblems(result.getProblems());
         context.recordDuration(Math.abs(System.nanoTime() - start), TimeUnit.NANOSECONDS, statement, language);
-        if (Query.XPATH.equals(language)) {
-            return new XPathQueryResult(context, statement, result, hints.restartable, hints.rowsKeptInMemory);
-        } else if (Query.SQL.equals(language)) {
-            return new JcrSqlQueryResult(context, statement, result, hints.restartable, hints.rowsKeptInMemory);
-        }
         return new JcrQueryResult(context, statement, result, hints.restartable, hints.rowsKeptInMemory);
     }
 
@@ -144,11 +139,6 @@ public class JcrQuery extends JcrAbstractQuery {
         final QueryResults result = planOnlyExecutable.execute(); // may be cancelled
 
         checkForProblems(result.getProblems());
-        if (Query.XPATH.equals(language)) {
-            return new XPathQueryResult(context, statement, result, false, 0);
-        } else if (Query.SQL.equals(language)) {
-            return new JcrSqlQueryResult(context, statement, result, false, 0);
-        }
         return new JcrQueryResult(context, statement, result, false, 0);
     }
 

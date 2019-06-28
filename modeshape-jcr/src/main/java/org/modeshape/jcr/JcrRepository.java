@@ -107,9 +107,7 @@ import org.modeshape.jcr.mimetype.NullMimeTypeDetector;
 import org.modeshape.jcr.query.parse.FullTextSearchParser;
 import org.modeshape.jcr.query.parse.JcrQomQueryParser;
 import org.modeshape.jcr.query.parse.JcrSql2QueryParser;
-import org.modeshape.jcr.query.parse.JcrSqlQueryParser;
 import org.modeshape.jcr.query.parse.QueryParsers;
-import org.modeshape.jcr.query.xpath.XPathQueryParser;
 import org.modeshape.jcr.security.AnonymousProvider;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.modeshape.jcr.security.AuthenticationProviders;
@@ -140,19 +138,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
      * @see javax.jcr.query.QueryManager#createQuery(String, String)
      */
     public static final class QueryLanguage {
-        /**
-         * The standard JCR 1.0 XPath query language.
-         */
-        @SuppressWarnings( "deprecation" )
-        public static final String XPATH = Query.XPATH;
-
-        /**
-         * The SQL dialect that is based upon an enhanced version of the JCR-SQL query language defined by the JCR 1.0.1
-         * specification.
-         */
-        @SuppressWarnings( "deprecation" )
-        public static final String JCR_SQL = Query.SQL;
-
         /**
          * The SQL dialect that is based upon an enhanced version of the JCR-SQL2 query language defined by the JCR 2.0
          * specification.
@@ -827,8 +812,8 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
         descriptors.put(Repository.NODE_TYPE_MANAGEMENT_VALUE_CONSTRAINTS_SUPPORTED, valueFor(factories, true));
         descriptors.put(Repository.NODE_TYPE_MANAGEMENT_UPDATE_IN_USE_SUPORTED, valueFor(factories, true));
         descriptors.put(Repository.QUERY_LANGUAGES,
-                        new JcrValue[] {valueFor(factories, Query.XPATH), valueFor(factories, Query.JCR_SQL2),
-                            valueFor(factories, Query.SQL), valueFor(factories, Query.JCR_JQOM)});
+                        new JcrValue[] {valueFor(factories, Query.JCR_SQL2),
+                            valueFor(factories, Query.JCR_JQOM)});
         descriptors.put(Repository.QUERY_STORED_QUERIES_SUPPORTED, valueFor(factories, true));
         descriptors.put(Repository.QUERY_FULL_TEXT_SEARCH_SUPPORTED, valueFor(factories, true));
         descriptors.put(Repository.QUERY_JOINS, valueFor(factories, Repository.QUERY_JOINS_INNER_OUTER));
@@ -1161,8 +1146,8 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 }
 
                 this.indexingExecutor = this.context.getThreadPool("modeshape-reindexing");
-                this.queryParsers = new QueryParsers(new JcrSql2QueryParser(), new XPathQueryParser(),
-                                                     new FullTextSearchParser(), new JcrSqlQueryParser(), new JcrQomQueryParser());
+                this.queryParsers = new QueryParsers(new JcrSql2QueryParser(),
+                                                     new FullTextSearchParser(), new JcrQomQueryParser());
                 RepositoryConfiguration.Reindexing reindexingCfg = config.getReindexing();
                 this.repositoryQueryManager = new RepositoryQueryManager(this, indexingExecutor, config, reindexingCfg);
                 if (reindexingCfg.isAsync()) {
@@ -1172,8 +1157,6 @@ public class JcrRepository implements org.modeshape.jcr.api.Repository {
                 }
 
                 // Check that we have parsers for all the required languages ...
-                assert this.queryParsers.getParserFor(Query.XPATH) != null;
-                assert this.queryParsers.getParserFor(Query.SQL) != null;
                 assert this.queryParsers.getParserFor(Query.JCR_SQL2) != null;
                 assert this.queryParsers.getParserFor(Query.JCR_JQOM) != null;
                 assert this.queryParsers.getParserFor(QueryLanguage.SEARCH) != null;

@@ -123,10 +123,10 @@
         <!--
           Apache JCR API unit tests (for any JCR implementation), which is a subset of the official TCK
         -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-jcr-tests</artifactId>
-        </dependency>
+        </dependency> -->
         <!--
           PicketBox (JAAS implementation used in test cases)
           -->
