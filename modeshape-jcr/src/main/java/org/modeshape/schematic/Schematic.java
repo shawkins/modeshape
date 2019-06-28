@@ -17,10 +17,13 @@ package org.modeshape.schematic;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
+
+import org.modeshape.persistence.file.FileDbProvider;
+import org.modeshape.persistence.relational.RelationalProvider;
 import org.modeshape.schematic.document.Document;
 import org.modeshape.schematic.document.Json;
 import org.modeshape.schematic.document.ParsingException;
@@ -68,7 +71,7 @@ public class Schematic extends DocumentFactory {
         if (type == null) {
             throw new IllegalArgumentException("The configuration document '" + document + "' does not contain a '" + TYPE_FIELD + "' field");
         }
-        ServiceLoader<SchematicDbProvider> providers = ServiceLoader.load(SchematicDbProvider.class, cl);
+        List<SchematicDbProvider> providers = Arrays.asList(new FileDbProvider(), new RelationalProvider());
         List<RuntimeException> raisedExceptions = new ArrayList<>();
         return (T) StreamSupport.stream(providers.spliterator(), false)
                                 .map(provider -> getDbFromProvider(type, document, raisedExceptions, provider))

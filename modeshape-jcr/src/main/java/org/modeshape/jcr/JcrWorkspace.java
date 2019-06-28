@@ -45,7 +45,6 @@ import javax.jcr.version.VersionException;
 import org.modeshape.common.annotation.ThreadSafe;
 import org.modeshape.common.util.CheckArg;
 import org.modeshape.jcr.JcrContentHandler.EnclosingSAXException;
-import org.modeshape.jcr.api.federation.FederationManager;
 import org.modeshape.jcr.api.index.IndexManager;
 import org.modeshape.jcr.cache.CachedNode;
 import org.modeshape.jcr.cache.MutableCachedNode;
@@ -82,7 +81,6 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
     private JcrQueryManager queryManager;
     private JcrObservationManager observationManager;
     private JcrRepositoryManager repositoryManager;
-    private ModeShapeFederationManager federationManager;
 
     JcrWorkspace( JcrSession session,
                   String workspaceName ) {
@@ -944,27 +942,6 @@ class JcrWorkspace implements org.modeshape.jcr.api.Workspace {
         } catch (ValueFormatException e) {
             throw new RepositoryException(e.getMessage());
         }
-    }
-
-    @Override
-    public FederationManager getFederationManager() throws RepositoryException {
-        session.checkLive();
-        return federationManager();
-    }
-
-    final ModeShapeFederationManager federationManager() {
-        if (federationManager == null) {
-            try {
-                lock.lock();
-                if (federationManager == null) {
-                    federationManager = new ModeShapeFederationManager(session, session.repository().runningState()
-                                                                                       .documentStore());
-                }
-            } finally {
-                lock.unlock();
-            }
-        }
-        return federationManager;
     }
 
 }

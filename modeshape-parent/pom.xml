@@ -643,27 +643,7 @@
             <!-- ModeShape subprojects -->
             <dependency>
                 <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.modeshape</groupId>
                 <artifactId>modeshape-jcr</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-schematic</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-persistence-relational</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-persistence-file</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -674,20 +654,6 @@
             <!--
                 ModeShape test modules
             -->
-            <dependency>
-                <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-common</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.modeshape</groupId>
-                <artifactId>modeshape-schematic</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>org.modeshape</groupId>
                 <artifactId>modeshape-jcr</artifactId>

@@ -16,9 +16,10 @@
 package org.modeshape.jcr.api;
 
 import java.util.concurrent.Future;
+
 import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
-import org.modeshape.jcr.api.federation.FederationManager;
+
 import org.modeshape.jcr.api.index.IndexManager;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.api.query.QueryManager;
@@ -139,11 +140,4 @@ public interface Workspace extends javax.jcr.Workspace {
      */
     Future<Boolean> reindexSinceAsync( long timestamp ) throws RepositoryException;
 
-    /**
-     * Returns the federation manager instance which can be used to connect to external sources.
-     * @return a {@link FederationManager} instance; never {@code null}
-     * @throws RepositoryException if anything unexpected fails.
-     * @see FederationManager
-     */
-    FederationManager getFederationManager() throws RepositoryException;
 }

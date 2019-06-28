@@ -399,14 +399,6 @@ public class JcrUnorderedCollectionsTest extends MultiUseAbstractTest {
         }
         assertTrue("Not all nodes imported correctly", childPaths.isEmpty());
     }
-    
-    @Test(expected = ConstraintViolationException.class)
-    @FixFor( "MODE-2109" )
-    public void shouldNotAllowProjections() throws Exception {
-        session.getRootNode().addNode("col", "test:smallCollection");
-        session.save();
-        session.getWorkspace().getFederationManager().createProjection("/col", "dummy", "/", "dummy");
-    }
 
     @Test
     @FixFor( "MODE-2109" )

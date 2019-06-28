@@ -926,10 +926,6 @@ public class RepositoryConfiguration {
         return Default.WORKSPACE_CACHE_SIZE;
     }
 
-    public Clustering getClustering() {
-        return new Clustering(doc.getDocument(FieldName.CLUSTERING));
-    }
-
     public BinaryStorage getBinaryStorage() {
         Document storage = doc.getDocument(FieldName.STORAGE);
         if (storage == null) {
@@ -2232,44 +2228,6 @@ public class RepositoryConfiguration {
         @Override
         public String toString() {
             return pathExpression;
-        }
-    }
-
-    /**
-     * Class holding the clustering configuration for a repository.
-     */
-    @Immutable
-    public class Clustering {
-
-        private final Document clusteringDoc;
-
-        public Clustering(Document clusteringDoc) {
-            this.clusteringDoc = clusteringDoc != null ? clusteringDoc : EMPTY;
-        }
-
-        /**
-         * Checks whether clustering is enabled or not.
-         *
-         * @return true if clustering is enabled, or false otherwise
-         */
-        public boolean isEnabled() {
-            return this.clusteringDoc != EMPTY;
-        }
-
-        public String getClusterName() {
-            return clusteringDoc.getString(FieldName.CLUSTER_NAME, Default.CLUSTER_NAME);
-        }
-
-        public String getConfiguration() {
-            return clusteringDoc.getString(FieldName.CLUSTER_CONFIGURATION, Default.CLUSTER_CONFIG);
-        }
-        
-        protected String getLocking() {
-            return clusteringDoc.getString(FieldName.CLUSTER_LOCKING, FieldValue.LOCKING_DB);
-        }
-        
-        public boolean useDbLocking() {
-            return getLocking().equals(FieldValue.LOCKING_DB);
         }
     }
 

@@ -443,36 +443,6 @@ public class RepositoryConfigurationTest {
     }
 
     @Test
-    public void shouldNotEnableClusteringIfMissingDocument() throws Exception {
-        RepositoryConfiguration config = RepositoryConfiguration.read("{ 'name' = 'nm', 'storage' : {}}");
-        RepositoryConfiguration.Clustering clusteringConfiguration = config.getClustering();
-        assertFalse(clusteringConfiguration.isEnabled());
-    }
-    
-    @Test
-    public void shouldAllowClusteringToBeConfigured() throws Exception {
-        String clusterName = "testCluster";
-        String channelConfig = "someConfig";
-
-        RepositoryConfiguration config = RepositoryConfiguration.read("{ \"clustering\" : {\"clusterName\":\"" + clusterName
-                                                                      + "\", \"configuration\": \"" + channelConfig
-                                                                      + "\"} }");
-        RepositoryConfiguration.Clustering clusteringConfiguration = config.getClustering();
-        assertTrue(clusteringConfiguration.isEnabled());
-        assertEquals(clusterName, clusteringConfiguration.getClusterName());
-        assertEquals(channelConfig, clusteringConfiguration.getConfiguration());
-    }
-    
-    @Test
-    public void shouldUseDefaultClusteringValues() throws Exception {
-        RepositoryConfiguration config = RepositoryConfiguration.read("{ \"clustering\" : {} }");
-        RepositoryConfiguration.Clustering clusteringConfiguration = config.getClustering();
-        assertTrue(clusteringConfiguration.isEnabled());
-        assertEquals(Default.CLUSTER_NAME, clusteringConfiguration.getClusterName());
-        assertEquals(Default.CLUSTER_CONFIG, clusteringConfiguration.getConfiguration());
-    }
-
-    @Test
     public void shouldUseDefaultLockingTimeout() throws Exception {
         RepositoryConfiguration config = RepositoryConfiguration.read("{ 'name' = 'nm', 'storage' : {}}");
         assertEquals(Default.LOCK_TIMEOUT, config.getLockTimeoutMillis());

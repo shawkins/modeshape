@@ -37,9 +37,6 @@
         <module>modeshape-parent</module>
         <!-- Order is important -->
         <module>modeshape-jcr-api</module>
-        <module>modeshape-common</module>
-        <module>modeshape-schematic</module>
-        <module>persistence</module>
         <module>modeshape-jcr</module>
     </modules>
     <properties>

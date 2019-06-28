@@ -27,27 +27,22 @@
             <groupId>org.modeshape</groupId>
             <artifactId>modeshape-jcr-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-schematic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-persistence-relational</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-persistence-file</artifactId>
-        </dependency>
         <!-- Heap and file-based maps -->
         <dependency>
             <groupId>org.mapdb</groupId>
             <artifactId>mapdb</artifactId>
         </dependency>
+        
+        <!-- We use a number of libraries to test the JSON and BSON readers and writers -->
+        <dependency>
+            <groupId>de.undercouch</groupId>
+            <artifactId>bson4jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+        </dependency>
+        
         <!-- Workspace cache -->
 
         <dependency>
@@ -55,20 +50,6 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!--  Used in tests -->
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-common</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.modeshape</groupId>
-            <artifactId>modeshape-schematic</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        
         <!--
         These following are defined as 'provided' in the parent POM, since ModeShape
         has code that is optional if these APIs are available.
@@ -111,6 +92,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -120,6 +102,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        
         <!--
           Apache JCR API unit tests (for any JCR implementation), which is a subset of the official TCK
         -->
